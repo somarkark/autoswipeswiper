@@ -1,0 +1,74 @@
+package com.frameworkstudios.autoswipeswiper
+
+import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.GestureDescription
+import android.content.Intent
+import android.graphics.Path
+import android.view.accessibility.AccessibilityEvent
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
+
+/**
+ * Performs the actual swipe gesture. Android requires an AccessibilityService
+ * to inject gestures into apps other than your own, which is why this exists
+ * instead of just simulating touches directly.
+ */
+class SwipeAccessibilityService : AccessibilityService() {
+
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        instance = this
+    }
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        // Android can disconnect an accessibility service without calling onDestroy
+        // (e.g. it gets rebound in the background). Clearing here, in addition to
+        // onDestroy below, is what lets the running loop notice the drop and recover
+        // instead of holding a dead reference.
+        if (instance === this) instance = null
+        return super.onUnbind(intent)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (instance === this) instance = null
+    }
+
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        // No event handling needed; this service is used purely to dispatch gestures.
+    }
+
+    override fun onInterrupt() {}
+
+    /** Swipes from (x1,y1) to (x2,y2) over [durationMs]. Suspends until the gesture completes. */
+    suspend fun performSwipe(x1: Float, y1: Float, x2: Float, y2: Float, durationMs: Long = 300) {
+        val path = Path().apply {
+            moveTo(x1, y1)
+            lineTo(x2, y2)
+        }
+        suspendCancellableCoroutine<Unit> { cont ->
+            val stroke = GestureDescription.StrokeDescription(path, 0, durationMs)
+            val gesture = GestureDescription.Builder().addStroke(stroke).build()
+
+            val callback = object : GestureResultCallback() {
+                override fun onCompleted(gestureDescription: GestureDescription?) {
+                    if (cont.isActive) cont.resume(Unit)
+                }
+
+                override fun onCancelled(gestureDescription: GestureDescription?) {
+                    if (cont.isActive) cont.resume(Unit)
+                }
+            }
+
+            val dispatched = dispatchGesture(gesture, callback, null)
+            if (!dispatched && cont.isActive) {
+                cont.resume(Unit)
+            }
+        }
+    }
+
+    companion object {
+        var instance: SwipeAccessibilityService? = null
+            private set
+    }
+}

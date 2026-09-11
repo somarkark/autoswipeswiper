@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">AutoSwipeSwiper</string>
+    <string name="accessibility_service_description">Allows AutoSwipeSwiper to perform the swipe gesture between the two points you set, at the interval you choose, until you press Stop. Nothing is read from the screen and nothing leaves the device.</string>
+</resources>

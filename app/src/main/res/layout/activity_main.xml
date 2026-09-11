@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="AutoSwipeSwiper"
+            android:textColor="@color/text_light"
+            android:textSize="30sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="20dp"
+            android:text="v1.0 — floating two-point swipe loop"
+            android:textColor="@color/text_dim"
+            android:textSize="13sp" />
+
+        <!-- Step 1 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/statusAccessibility"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="1. Accessibility service: OFF"
+                android:textColor="@color/text_light"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Lets the app perform the swipe you configure. Nothing is read from your screen."
+                android:textColor="@color/text_dim"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/btnAccessibility"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/btn_secondary"
+                android:text="Open Accessibility Settings"
+                android:textAllCaps="false"
+                android:textColor="@color/text_light" />
+        </LinearLayout>
+
+        <!-- Step 2 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/statusOverlay"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="2. Overlay permission: OFF"
+                android:textColor="@color/text_light"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Allows the floating control panel to stay on top of other apps."
+                android:textColor="@color/text_dim"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/btnOverlay"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/btn_secondary"
+                android:text="Open Overlay Settings"
+                android:textAllCaps="false"
+                android:textColor="@color/text_light" />
+        </LinearLayout>
+
+        <!-- Step 3 -->
+        <Button
+            android:id="@+id/btnLaunchControls"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/btn_primary"
+            android:enabled="false"
+            android:text="Launch Floating Panel"
+            android:textAllCaps="false"
+            android:textColor="@color/text_light"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Quick guide: drag the two dots (A and B) to where the swipe should start and end, set the interval in milliseconds, then press Start."
+            android:textColor="@color/text_dim"
+            android:textSize="12sp" />
+    </LinearLayout>
+</ScrollView>
