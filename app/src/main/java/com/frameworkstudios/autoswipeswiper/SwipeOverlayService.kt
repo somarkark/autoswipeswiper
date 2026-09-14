@@ -3,10 +3,13 @@ package com.frameworkstudios.autoswipeswiper
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -17,6 +20,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -139,9 +143,24 @@ class SwipeOverlayService : Service() {
         val b = pointB ?: return
         val intervalMs = intervalInput.text.toString().toLongOrNull()?.coerceAtLeast(0) ?: 1000L
 
+        // Immediate feedback that the tap registered, before we even know if
+        // the accessibility service is connected.
+        vibrate(30)
+
+        if (SwipeAccessibilityService.instance == null) {
+            // Fail loudly and immediately instead of silently retrying for a
+            // few seconds — this is almost always an Accessibility permission
+            // that looks "on" in Settings but isn't actually bound (common on
+            // MIUI/HyperOS). Long buzz = distinct from the short "tap" buzz.
+            vibrate(400)
+            toast("Accessibility not connected — reopen Accessibility settings and toggle it off/on")
+            setStatus("Accessibility not connected.", error = true)
+            return
+        }
+
         btnStart.isEnabled = false
         btnStop.isEnabled = true
-        statusText.text = "Running…"
+        setStatus("Running…", running = true)
 
         loopJob = serviceScope.launch {
             var missing = 0
@@ -150,10 +169,11 @@ class SwipeOverlayService : Service() {
                 if (service == null) {
                     missing++
                     if (missing >= 6) {
-                        statusText.text = "Accessibility lost. Re-enable then Start again."
+                        vibrate(400)
+                        setStatus("Accessibility lost. Re-enable then Start again.", error = true)
                         break
                     }
-                    statusText.text = "Service reconnecting…"
+                    setStatus("Service reconnecting…", error = true)
                     delay(500); continue
                 }
                 missing = 0
@@ -161,9 +181,10 @@ class SwipeOverlayService : Service() {
                 val (bx, by) = crosshairCenter(b)
                 try {
                     service.performSwipe(ax, ay, bx, by)
-                    statusText.text = "Running…"
+                    vibrate(15)
+                    setStatus("Running…", running = true)
                 } catch (e: Exception) {
-                    statusText.text = "Gesture error, retrying…"
+                    setStatus("Gesture error, retrying…", error = true)
                 }
                 delay(intervalMs)
             }
@@ -176,7 +197,33 @@ class SwipeOverlayService : Service() {
         loopJob?.cancel(); loopJob = null
         btnStart.isEnabled = true
         btnStop.isEnabled = false
+        setStatus(message)
+    }
+
+    private fun setStatus(message: String, running: Boolean = false, error: Boolean = false) {
         statusText.text = message
+        val colorRes = when {
+            error -> R.color.danger
+            running -> R.color.success
+            else -> R.color.text_dim
+        }
+        statusText.setTextColor(getColor(colorRes))
+    }
+
+    private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+
+    private fun vibrate(ms: Long) {
+        val v = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (getSystemService(Context.VIBRATOR_MANAGER_SERVICE)
+                as android.os.VibratorManager).defaultVibrator
+        } else {
+            @Suppress("DEPRECATION") getSystemService(VIBRATOR_SERVICE) as Vibrator
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            v.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            @Suppress("DEPRECATION") v.vibrate(ms)
+        }
     }
 
     // ---- helpers -------------------------------------------------------------
