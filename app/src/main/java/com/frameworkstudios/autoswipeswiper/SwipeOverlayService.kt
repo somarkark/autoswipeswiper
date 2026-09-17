@@ -277,6 +277,17 @@ class SwipeOverlayService : Service() {
 
     private fun addCrosshair(color: Int, label: String, cx: Int, cy: Int): CrosshairView {
         val size = 140
+        val (screenW, screenH) = screenSize()
+        // Android reserves a strip along the left/right edges (varies by
+        // phone, ~24-48dp) exclusively for the system back-gesture. A swipe
+        // that starts inside that strip gets intercepted as "back" before it
+        // ever reaches the target app — so keep points out of it entirely.
+        val margin = (64 * resources.displayMetrics.density).toInt()
+        val minX = margin
+        val maxX = (screenW - size - margin).coerceAtLeast(minX)
+        val minY = margin
+        val maxY = (screenH - size - margin).coerceAtLeast(minY)
+
         val ch = CrosshairView(this, color, label)
         val params = WindowManager.LayoutParams(
             size, size, overlayWindowType,
@@ -285,11 +296,12 @@ class SwipeOverlayService : Service() {
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = cx - size / 2; y = cy - size / 2
+            x = (cx - size / 2).coerceIn(minX, maxX)
+            y = (cy - size / 2).coerceIn(minY, maxY)
         }
         ch.onMoved = { rx, ry ->
-            params.x = (rx - size / 2f).toInt()
-            params.y = (ry - size / 2f).toInt()
+            params.x = (rx - size / 2f).toInt().coerceIn(minX, maxX)
+            params.y = (ry - size / 2f).toInt().coerceIn(minY, maxY)
             windowManager.updateViewLayout(ch, params)
         }
         windowManager.addView(ch, params)
