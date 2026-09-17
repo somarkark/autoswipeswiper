@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="260dp"
+    android:layout_width="270dp"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="@drawable/panel_bg"
@@ -41,14 +41,45 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dp"
-        android:text="Drag the green (A) and pink (B) dots on screen, set the interval, then Start."
+        android:text="Drag the green (A) and pink (B) dots on screen, then Start."
         android:textColor="@color/text_dim"
         android:textSize="11sp" />
+
+    <!-- Direction -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="10dp">
+
+        <TextView
+            android:id="@+id/directionText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Direction: A → B"
+            android:textColor="@color/text_light"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/btnDirection"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:minWidth="0dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:background="@drawable/btn_secondary"
+            android:text="⇄ Reverse"
+            android:textAllCaps="false"
+            android:textColor="@color/text_light"
+            android:textSize="12sp" />
+    </LinearLayout>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Interval between swipes (ms)"
+        android:text="Interval between swipes (seconds)"
         android:textColor="@color/text_dim"
         android:textSize="11sp" />
 
@@ -57,15 +88,101 @@
         android:layout_width="match_parent"
         android:layout_height="42dp"
         android:layout_marginTop="4dp"
-        android:layout_marginBottom="10dp"
+        android:layout_marginBottom="8dp"
         android:background="@drawable/edit_bg"
         android:paddingStart="10dp"
         android:paddingEnd="10dp"
-        android:inputType="number"
+        android:inputType="numberDecimal"
         android:maxLines="1"
-        android:text="1000"
+        android:text="1.0"
         android:textColor="@color/text_light"
         android:textSize="14sp" />
+
+    <!-- Quick presets -->
+    <LinearLayout
+        android:id="@+id/presetRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="10dp">
+
+        <Button
+            android:id="@+id/btnPreset05"
+            android:tag="0.5"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:minWidth="0dp"
+            android:padding="0dp"
+            android:background="@drawable/btn_secondary"
+            android:text="0.5s"
+            android:textAllCaps="false"
+            android:textColor="@color/text_light"
+            android:textSize="11sp" />
+
+        <Button
+            android:id="@+id/btnPreset1"
+            android:tag="1"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:minWidth="0dp"
+            android:padding="0dp"
+            android:background="@drawable/btn_secondary"
+            android:text="1s"
+            android:textAllCaps="false"
+            android:textColor="@color/text_light"
+            android:textSize="11sp" />
+
+        <Button
+            android:id="@+id/btnPreset2"
+            android:tag="2"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:minWidth="0dp"
+            android:padding="0dp"
+            android:background="@drawable/btn_secondary"
+            android:text="2s"
+            android:textAllCaps="false"
+            android:textColor="@color/text_light"
+            android:textSize="11sp" />
+
+        <Button
+            android:id="@+id/btnPreset3"
+            android:tag="3"
+            android:layout_width="0dp"
+            android:layout_height="34dp"
+            android:layout_weight="1"
+            android:minWidth="0dp"
+            android:padding="0dp"
+            android:background="@drawable/btn_secondary"
+            android:text="3s"
+            android:textAllCaps="false"
+            android:textColor="@color/text_light"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <!-- Randomize toggle -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="10dp">
+
+        <CheckBox
+            android:id="@+id/chkRandomize"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Randomize 1–3s"
+            android:textColor="@color/text_light"
+            android:textSize="12sp" />
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"

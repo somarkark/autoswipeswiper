@@ -17,6 +17,7 @@ import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -28,10 +29,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 /**
  * Floating control panel with two draggable points (A and B). While running,
- * repeatedly swipes from A to B, waiting [loopIntervalMs] between each swipe.
+ * repeatedly swipes between them — direction and timing are all live-adjustable
+ * from the panel, even while the loop is running.
  */
 class SwipeOverlayService : Service() {
 
@@ -42,14 +45,21 @@ class SwipeOverlayService : Service() {
     private var pointA: CrosshairView? = null
     private var pointB: CrosshairView? = null
 
+    /** false = swipe A→B, true = swipe B→A. Read fresh every loop tick, so
+     *  toggling it mid-run takes effect on the very next swipe. */
+    private var reversed = false
+
     private val serviceScope = CoroutineScope(Dispatchers.Main)
     private var loopJob: Job? = null
 
     private lateinit var statusText: TextView
+    private lateinit var directionText: TextView
     private lateinit var intervalInput: EditText
+    private lateinit var chkRandomize: CheckBox
     private lateinit var btnStart: Button
     private lateinit var btnStop: Button
     private lateinit var btnClose: Button
+    private lateinit var btnDirection: Button
 
     private val overlayWindowType: Int
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
@@ -116,16 +126,25 @@ class SwipeOverlayService : Service() {
         setupDrag()
 
         statusText = panelView.findViewById(R.id.statusText)
+        directionText = panelView.findViewById(R.id.directionText)
         intervalInput = panelView.findViewById(R.id.intervalInput)
+        chkRandomize = panelView.findViewById(R.id.chkRandomize)
         btnStart = panelView.findViewById(R.id.btnStart)
         btnStop = panelView.findViewById(R.id.btnStop)
         btnClose = panelView.findViewById(R.id.btnClose)
+        btnDirection = panelView.findViewById(R.id.btnDirection)
 
         makeEditable(intervalInput)
 
         btnStart.setOnClickListener { startLoop() }
         btnStop.setOnClickListener { stopLoop("Stopped.") }
         btnClose.setOnClickListener { stopSelf() }
+        btnDirection.setOnClickListener { toggleDirection() }
+
+        listOf(R.id.btnPreset05, R.id.btnPreset1, R.id.btnPreset2, R.id.btnPreset3).forEach { id ->
+            val btn = panelView.findViewById<Button>(id)
+            btn.setOnClickListener { intervalInput.setText(btn.tag as String) }
+        }
 
         btnStop.isEnabled = false
     }
@@ -136,12 +155,17 @@ class SwipeOverlayService : Service() {
         pointB = addCrosshair(getColor(R.color.point_b), "B", w * 2 / 3, h / 2)
     }
 
+    private fun toggleDirection() {
+        reversed = !reversed
+        directionText.text = if (reversed) "Direction: B → A" else "Direction: A → B"
+        vibrate(20)
+    }
+
     // ---- swipe loop ---------------------------------------------------------
 
     private fun startLoop() {
         val a = pointA ?: return
         val b = pointB ?: return
-        val intervalMs = intervalInput.text.toString().toLongOrNull()?.coerceAtLeast(0) ?: 1000L
 
         // Immediate feedback that the tap registered, before we even know if
         // the accessibility service is connected.
@@ -177,16 +201,19 @@ class SwipeOverlayService : Service() {
                     delay(500); continue
                 }
                 missing = 0
-                val (ax, ay) = crosshairCenter(a)
-                val (bx, by) = crosshairCenter(b)
+
+                val from = if (reversed) b else a
+                val to = if (reversed) a else b
+                val (fx, fy) = crosshairCenter(from)
+                val (tx, ty) = crosshairCenter(to)
                 try {
-                    service.performSwipe(ax, ay, bx, by)
+                    service.performSwipe(fx, fy, tx, ty)
                     vibrate(15)
                     setStatus("Running…", running = true)
                 } catch (e: Exception) {
                     setStatus("Gesture error, retrying…", error = true)
                 }
-                delay(intervalMs)
+                delay(currentDelayMs())
             }
             btnStart.isEnabled = true
             btnStop.isEnabled = false
@@ -198,6 +225,16 @@ class SwipeOverlayService : Service() {
         btnStart.isEnabled = true
         btnStop.isEnabled = false
         setStatus(message)
+    }
+
+    /** Delay before the next swipe: a random 1-3s if the checkbox is on,
+     *  otherwise whatever's typed in the interval field (seconds, converted to ms). */
+    private fun currentDelayMs(): Long {
+        if (chkRandomize.isChecked) {
+            return Random.nextLong(1000L, 3001L)
+        }
+        val seconds = intervalInput.text.toString().toDoubleOrNull()?.coerceAtLeast(0.0) ?: 1.0
+        return (seconds * 1000).toLong()
     }
 
     private fun setStatus(message: String, running: Boolean = false, error: Boolean = false) {
