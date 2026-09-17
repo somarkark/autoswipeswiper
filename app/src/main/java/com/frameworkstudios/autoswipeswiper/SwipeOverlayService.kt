@@ -207,11 +207,19 @@ class SwipeOverlayService : Service() {
                 val (fx, fy) = crosshairCenter(from)
                 val (tx, ty) = crosshairCenter(to)
                 try {
+                    // The dots are touchable overlay windows sitting exactly at
+                    // the swipe's start/end coordinates. If left touchable, the
+                    // injected gesture gets delivered to our own dot instead of
+                    // the app underneath. Make them click-through for the brief
+                    // moment the swipe is actually in flight, then restore.
+                    setPointsTouchable(false)
                     service.performSwipe(fx, fy, tx, ty)
                     vibrate(15)
                     setStatus("Running…", running = true)
                 } catch (e: Exception) {
                     setStatus("Gesture error, retrying…", error = true)
+                } finally {
+                    setPointsTouchable(true)
                 }
                 delay(currentDelayMs())
             }
@@ -311,6 +319,23 @@ class SwipeOverlayService : Service() {
     private fun removePoints() {
         listOf(pointA, pointB).forEach { it?.let { v -> runCatching { windowManager.removeView(v) } } }
         pointA = null; pointB = null
+    }
+
+    /** Toggles click-through on both dots. Called around each dispatched swipe
+     *  so our own overlay windows don't steal the synthetic touch — see the
+     *  comment at the call site in the swipe loop for why this is necessary. */
+    private fun setPointsTouchable(touchable: Boolean) {
+        listOf(pointA, pointB).forEach { view ->
+            view?.let {
+                val p = it.layoutParams as WindowManager.LayoutParams
+                p.flags = if (touchable) {
+                    p.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE.inv()
+                } else {
+                    p.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                }
+                runCatching { windowManager.updateViewLayout(it, p) }
+            }
+        }
     }
 
     private fun setupDrag() {
